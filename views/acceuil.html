@@ -1,0 +1,352 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Acceuil</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style type="text/css">
+      body {
+        margin:5%;
+      }
+      .onglet {
+        width: 15%;font-size: 1.3em;padding:1% 3%;float:left;display: flex;
+      }
+      .onglet.actif {
+        background: rgba(0,0,0,0.1);
+      }
+      .contenu {
+        clear: both;
+        display: none;
+        padding:2%;
+        height: 500px;
+      }
+      .contenu.actif {
+        display: block;
+        background: rgba(0,0,0,0.1);
+      }
+      section.chat form {
+        background: #000;
+        padding: 3px;
+        width: 100%;
+        height: 50px;
+      }
+      section.chat form input {
+        border: 0;
+        padding: 5px 10px;
+        width: 90%;
+        height: 100%;
+        margin-right: .5%;
+        font-size: 20px;
+      }
+      section.chat form button {
+        width: 9%;
+        height: 100%;
+        background: #e67e22;
+        float: right;
+        border: none;
+        margin-right: 0.5%;
+        font-size: 17px;
+        color: white;
+      }
+      section.chat .messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        font-size: 15px;
+      }
+      section.chat .messages li {
+        padding: 5px 10px;
+      }
+      section.chat .messages li:nth-child(odd) {
+        background: #eee;
+      }
+      section.chat .messages li span.username {
+        display: inline-block;
+        padding: 6px 10px;
+        margin-right: 5px;
+        color: white;
+        background: #e67e22;
+        border-radius: 5px;
+      }
+      section.chat .messages li.logout {
+        background: #E5A6A6;
+      }
+      section.chat .messages li.login {
+        background: #A8E5A6;
+      }
+      section.chat .messages li span.info {
+        display: inline-block;
+        padding: 3px 10px;
+        margin-right: 5px;
+        color: white;
+        background: #e67e22;
+        border-radius: 5px;
+      }
+      section.chat .messages {
+        display: inline-block;
+        width: calc(100% - 250px);
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+      section.chat {
+        height: 100%;
+      }
+      section.chat .users {
+        display: inline-block;
+        vertical-align: top;
+        overflow: auto;
+        width: 35%;
+        list-style-type: none;
+        height: 100%;
+        border-left: 3px solid #eee;
+      }
+      section.chat .users li.new {
+        background: #e67e22;
+        color: white;
+      }
+      section.chat .users li {
+        padding: 6px 10px;
+        margin: 10px 10px;
+        border-radius: 5px;
+        border: 1px solid #e67e22;
+        color: black;
+      transition: all 0.5s;
+      }
+      section.chat .users li span.typing {
+        float: right;
+        font-style: italic;
+        color: #eee;
+        display: none;
+      }
+      .commande{
+        background: pink!important;
+      }
+      body#logged-out {
+        background: rgb(223, 223, 223);
+      }
+      body#logged-out .container {
+        filter: blur(5px);
+        -webkit-filter: blur(5px);
+      }
+      body#logged-out section#login {
+        opacity: 1;
+      }
+      section#login {
+        transition: all 0.5s;
+        opacity: 0;
+        text-align: center;
+        width: 100%
+      }
+      section#login label[for="u"] {
+        display: block;
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      section#login input#u {
+        font-size: 25px;
+        text-align: center;
+        padding: 5px;
+        border: 5px solid rgb(158, 158, 158);
+      }
+      section#login input#u:focus {
+        outline: none;
+      }
+      section#login form{
+        top: 200px;
+      }
+      section#login button {
+        background: #e67e22;
+        border: none;
+        padding: 5px 80px;
+        color: white;
+        font-size: 20px;
+        margin-top: 20px;
+        cursor: pointer;
+      }
+      .btn-close{
+        font-size: 20px;
+        text-decoration: none;
+        cursor: pointer;
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body id="logged-out">
+    <section id="login">
+      <form action="">
+        <label for="u">Username</label>
+        <input id="u" autocomplete="off" autofocus />
+        <p>
+          <button>Login</button>
+        </p>
+      </form>
+    </section>
+    <div class="container">
+      <div class="col-md-3" style="border: 1px solid black;">
+        <form method="post" id="create_room">
+          <div class="form-group">
+            <input type="text" name="nameChat" placeholder="Nom chat room" id="nameofchat"/>
+            <button type="submit" class="btn btn-primary">Céer</button>
+          </div>
+        </form>
+        <ul id="rooms">
+        </ul> 
+      </div> 
+      <div class="col-md-offset-1 col-md-8">
+        <div class="onglets">
+        </div>
+        <div id="mdr">
+        </div>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script type="text/javascript">
+
+      var socket = io.connect('http://localhost:8080');
+      var allChat = [];
+      var TabLiens;
+      var TabCt;
+      socket.on('connect', function(){
+        // call the server-side function 'adduser' and send one parameter (value of prompt)
+        //socket.emit('adduser', prompt("What's your name?"));
+      });
+      function onglets(int, room){
+        $('.actif').removeClass('actif');
+        TabLiens[int].className = "onglet actif";
+        TabCt[int].className = "contenu actif";
+        socket.emit('switchRoom', room.id);
+      }
+
+      function close_onglet(int, room){
+        TabLiens[int].remove();
+        TabCt[int].remove();
+        delete(TabCt, int);
+        delete(TabLiens, int);
+        allChat.splice(int);
+        socket.emit('leftRoom', room.id, int);
+      }
+
+      socket.on('updaterooms', function(rooms, userRoom) {
+        $('#rooms').empty();
+        $.each(rooms, function(key, value) {
+          if(userRoom.length != 0){
+            var ok = false;
+            $.each(allChat, function(key, val) {
+              if(value == val){
+                ok = true;
+              }
+            })
+            if(ok){
+              $('#rooms').append('<div>'+ value +'</div>');
+            }
+            else {
+              $('#rooms').append('<div><a href="#" onclick="openRoom(\''+value+'\')">' + value + '</a></div>');
+            }
+          }
+          else{
+            $('#rooms').append('<div><a href="#" onclick="openRoom(\''+value+'\')">' + value + '</a></div>');
+          }
+        })
+      });
+      // listener, whenever the server emits 'updatechat', this updates the chat body
+      socket.on('updatechat', function (username, data, room) {
+        $('#'+room+' .messages').append($('<li>').html('<span class="username">' + username + '</span> ' + data));
+      });
+
+      socket.on('add_user', function(users, userRoom){
+        $('#'+userRoom+' .users').empty();
+        for (var i = 0; i < users.length; i++) {
+          if(users[i].room == userRoom){
+            $('#'+userRoom+' .users').append($('<li class="' + users[i].username + ' new">').html(users[i].username + '<span class="typing">typing</span>'));
+          }
+        }
+      })
+
+      function openRoom(room){
+        var verifRoom = true;
+        if(allChat.length != 0){
+          $.each(allChat, function(key, val) {
+              if(val == room){
+                verifRoom = false;
+              } 
+          })
+        }
+        if(verifRoom){
+          $('.onglet').removeClass('actif');
+          $('.contenu').removeClass('actif');
+          $('.onglets').append('<div onclick="onglets('+ allChat.length +', '+room+')" class="onglet actif">'+ room +'<p onclick="close_onglet('+ allChat.length +', '+ room +')" class="btn-close">×</p></div>');
+          $('#mdr').append('<div class="contenu actif"><section class="chat" id="'+ room +'"><ul class="messages"></ul><ul class="users"></ul><form action="" onsubmit = "chat(event, this)"><input class="m" autocomplete="off" name="text"/><button>Send</button></form></section></div>');
+          TabLiens = document.querySelectorAll(".onglets .onglet");
+          TabCt = document.querySelectorAll("#mdr .contenu");
+          allChat.push(room);
+        }
+        socket.emit('switchRoom', room);
+        socket.emit('openRoom', room);
+      }
+      $('#login form').submit(function (e) {
+        e.preventDefault();
+        var user = {
+          username : $('#login input').val().trim()
+        };
+        if (user.username.length > 0) { // Si le champ de connexion n'est pas vide
+          socket.emit('adduser', user, function (success) {
+            if (success) {
+              $('body').removeAttr('id'); // Cache formulaire de connexion
+              $('.chat input').focus(); // Focus sur le champ du message
+            }
+          });
+        }
+      });
+      $('#create_room').submit(function (e) {  
+        e.preventDefault();
+        socket.emit('newroom', $('#nameofchat').val());
+        $('#nameofchat').val("");  
+      });
+      function chat(e, form){
+        e.preventDefault();
+        if(form.text.value.trim().length > 0){
+          if(form.text.value.match(/^\//)){
+            if(form.text.value.match(/^\/nick\s.*/)){
+              var name = form.text.value.replace(/^\/nick\s/, "");
+              socket.emit('change-name', name);
+            }
+            else if(form.text.value.match(/^\/list\s.*/)){
+              var room = form.text.value.replace(/^\/list\s/, "");
+              socket.emit('list_room', room);
+            }
+            else if(form.text.value.match(/^\/join\s.*/)){
+              var room = form.text.value.replace(/^\/join\s/, "");
+              socket.emit('verifRoom', room, function (success) {
+                if (success) {
+                  openRoom(room);
+                }
+              });
+            }
+            else if(form.text.value.match(/^\/part\s.*/)){
+              var room = form.text.value.replace(/^\/part\s/, "");
+              var ok = false;
+              for (var i = 0; i < allChat.length; i++) {
+                if(allChat[i] == room){
+                  var ok = true;
+                  var int = i;
+                }
+              }
+              if(ok){
+                close_onglet(int, room);
+              }
+            }
+            else if(form.text.value.match(/^\/users$/)){
+                socket.emit('show-users');
+            }
+          }
+          else{
+            socket.emit('sendchat', form.text.value);
+          }
+        }
+        form.text.value = "";
+      }
+    </script>
+  </body>
+</html>
